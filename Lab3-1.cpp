@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <iomanip>
 #include <ctime>
+#include <atomic>
 using namespace std;
 
 #define THREADS_NUMBER 12
@@ -12,7 +13,7 @@ int stepSize = 9307400;
 int maxSteps = n / stepSize + 1;
 double pi = 0;
 volatile long int stepNum = THREADS_NUMBER;
-
+atomic_int counter =  0;
 
 
 DWORD WINAPI ThreadFunc(LPVOID lpParameter)
@@ -28,7 +29,9 @@ DWORD WINAPI ThreadFunc(LPVOID lpParameter)
 			long double x = (i + 0.5) / n;
 			curPi += 4 / (1 + x * x);
 		}
-		numberOfCurThread = InterlockedExchangeAdd(&stepNum, 1);
+		//numberOfCurThread = stepNum
+		//stepNum++;
+		numberOfCurThread = InterlockedExchangeAdd(&stepNum, 1); 
 		if (stepNum > maxSteps)
 			break;
 		SuspendThread(hThreads[(int)lpParameter]);
@@ -54,14 +57,11 @@ int main()
 
 	double start = GetTickCount();
 
-	while (stepNum < maxSteps)
+	while (stepNum <= maxSteps)
 		for (int i = 0; i < THREADS_NUMBER; i++)
 			ResumeThread(hThreads[i]);
 
 
-	
-	for (int i = 0; i < THREADS_NUMBER; i++)
-		ResumeThread(hThreads[i]);
 	
 	WaitForMultipleObjects(THREADS_NUMBER, hThreads, TRUE, INFINITE);
 
